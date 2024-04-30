@@ -289,94 +289,17 @@ contains
       call this%betr_time%Init(namelist_buffer)
     endif
     !allocate memory
-    allocate(this%betr(bounds%begc:bounds%endc))
-    allocate(this%biophys_forc(bounds%begc:bounds%endc))
-    allocate(this%biogeo_flux(bounds%begc:bounds%endc))
-    allocate(this%biogeo_state(bounds%begc:bounds%endc))
-    allocate(this%bstatus(bounds%begc:bounds%endc))
-    allocate(this%betr_col(bounds%begc:bounds%endc))
-    allocate(this%betr_pft(bounds%begc:bounds%endc))
-    allocate(this%active_col(bounds%begc:bounds%endc))
-    allocate(this%bsimstatus)
+    !allocate(this%betr(bounds%begc:bounds%endc))
 
     call this%bsimstatus%reset()
 
     !grid horizontal bounds
     call this%BeTRSetBounds(betr_bounds)
 
-    do c = bounds%begc, bounds%endc
-      l = col%landunit(c)
-      call this%biophys_forc(c)%Init(betr_bounds)
-
-      call this%betr_col(c)%Init(betr_bounds)
-
-      call this%betr_pft(c)%Init(betr_bounds)
-
-      if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
-        this%active_col(c) = .true.
-      else
-        this%active_col(c) = .false.
-      endif
-    enddo
     call this%BeTRSetcps(bounds, col, pft)
     call this%BeTRSetBiophysForcing(bounds, col, pft, betr_bounds%lbj, betr_bounds%ubj, &
         waterstate_vars = waterstate)
 
-    do c = bounds%begc, bounds%endc
-      call this%betr(c)%Init(namelist_buffer, betr_bounds, this%betr_col(c), &
-          this%biophys_forc(c), asoibgc, this%bstatus(c))
-      if(c==bounds%begc)this%active_soibgc=asoibgc
-      if(this%bstatus(c)%check_status())then
-        call this%bsimstatus%setcol(c)
-        call this%bsimstatus%set_msg(this%bstatus(c)%print_msg(),this%bstatus(c)%print_err())
-        exit
-      endif
-    enddo
-
-    if(this%bsimstatus%check_status())call endrun(msg=this%bsimstatus%print_msg())
-
-    do c = bounds%begc, bounds%endc
-
-      call this%biogeo_state(c)%Init(betr_bounds, this%active_soibgc)
-
-      call this%biogeo_flux(c)%Init(betr_bounds, this%active_soibgc)
-    enddo
-    !identify variables that are used for history output
-    c = bounds%begc
-    call this%betr(c)%get_hist_size(this%num_hist_state1d, this%num_hist_state2d, &
-      this%num_hist_flux1d, this%num_hist_flux2d)
-
-    call this%HistAlloc(bounds)
-
-    call this%betr(c)%get_hist_info(this%num_hist_state1d, this%num_hist_state2d, &
-      this%num_hist_flux1d, this%num_hist_flux2d, &
-      this%state_hist1d_var(1:this%num_hist_state1d), this%state_hist2d_var(1:this%num_hist_state2d), &
-      this%flux_hist1d_var(1:this%num_hist_flux1d), this%flux_hist2d_var(1:this%num_hist_flux2d))
-
-    if(this%bstatus(c)%check_status())then
-      call this%bsimstatus%setcol(c)
-      call this%bsimstatus%set_msg(this%bstatus(c)%print_msg(),this%bstatus(c)%print_err())
-      if(this%bsimstatus%check_status())call endrun(msg=this%bsimstatus%print_msg())
-    endif
-
-    if(betr_offline)then
-      call this%CreateOfflineHistory(bounds, betr_nlevtrc_soil, &
-         this%num_hist_state1d, this%num_hist_state2d, &
-            this%num_hist_flux1d, this%num_hist_flux2d)
-    else
-      call this%BeTRCreateHistory(bounds, betr_nlevtrc_soil, &
-         this%num_hist_state1d, this%num_hist_state2d, &
-            this%num_hist_flux1d, this%num_hist_flux2d)
-    endif
-    !identify restart variables
-    call this%betr(c)%get_restartvar_size(this%num_rest_state1d, this%num_rest_state2d)
-
-    call this%RestAlloc(bounds)
-
-    if(present(base_filename)) then
-      call this%regression%Init(base_filename, namelist_buffer, this%bsimstatus)
-      if(this%bsimstatus%check_status())call endrun(msg=this%bsimstatus%print_msg())
-    endif
   end subroutine BeTRInit
   !---------------------------------------------------------------------------------
   subroutine BeTRSimulationRestartAlloc(this, bounds)

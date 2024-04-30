@@ -37,7 +37,7 @@ module BgcCentCnpType
     type(centurybgc_index_type), private :: centurybgc_index
     real(r8), pointer                    :: ystates0(:)
     real(r8), pointer                    :: ystates1(:)
-    real(r8), pointer                    :: k_decay(:)
+    real(r8), pointer                    :: k_decay(:) => null() 
     real(r8), pointer                    :: cascade_matrix(:,:)
     real(r8), pointer                    :: cascade_matrixd(:,:)
     real(r8), pointer                    :: cascade_matrixp(:,:)
@@ -139,7 +139,8 @@ contains
 
   allocate(this%ystates0(nstvars)); this%ystates0(:) = 0._r8
   allocate(this%ystates1(nstvars)); this%ystates1(:) = 0._r8
-  allocate(this%k_decay(nom_pools)); this%k_decay(:) = 0._r8
+  !allocate(this%k_decay(nom_pools)); this%k_decay(:) = 0._r8
+  allocate(this%k_decay(1:10)); this%k_decay(:) = 0._r8
   allocate(this%scal_f(nprimvars));  this%scal_f(:) = 0._r8
   allocate(this%conv_f(nprimvars));  this%conv_f(:) = 0._r8
   allocate(this%conc_f(nprimvars));  this%conc_f(:) = 0._r8
@@ -240,9 +241,9 @@ contains
   call this%calc_cascade_matrix(this%centurybgc_index, cascade_matrix, frc_c13, frc_c14)
 
   !run century decomposition, return decay rates, cascade matrix, potential hr
-  call this%censom%run_decomp(is_surf, this%centurybgc_index, dtime, ystates1(1:nom_tot_elms),&
+  call this%censom%run_decomp(is_surf, this%centurybgc_index, dtime, ystates1,&
       this%decompkf_eca, centuryeca_forc%pct_sand, centuryeca_forc%pct_clay,this%alpha_n, this%alpha_p, &
-      cascade_matrix, this%k_decay(1:nom_pools), pot_co2_hr, bstatus)
+      cascade_matrix, this%k_decay, pot_co2_hr, bstatus)
 
 !  call this%sumup_cnp_mass('af run_decomp')
   if(bstatus%check_status())return

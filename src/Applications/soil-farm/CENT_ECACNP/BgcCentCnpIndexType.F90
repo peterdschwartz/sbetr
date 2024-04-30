@@ -436,8 +436,8 @@ implicit none
     allocate(this%primvarid(ireac)); this%primvarid(:) = -1
     allocate(this%is_aerobic_reac(ireac)); this%is_aerobic_reac(:)=.false.
 
-    allocate(this%varnames(this%nstvars))
-    call copy_name(this%nstvars, list_name, this%varnames(1:this%nstvars))
+    !allocate(this%varnames(itemp))
+    !call copy_name(this%nstvars, list_name, this%varnames(1:itemp))
     call list_free(list_name)
 
   end subroutine InitPars
